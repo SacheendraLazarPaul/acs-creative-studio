@@ -6,10 +6,10 @@ import { useStore } from '../store'
 const ANALYSIS_TASKS = ['describe','pose','style','prompt','character','translate']
 
 const STARTERS = [
-  "What's the weather like today?",
-  "Help me write a Stable Diffusion image prompt",
+  "Create an image of a cozy cabin in the snow",
+  "What's the weather in Gwalior today?",
   "What's trending online right now?",
-  "Generate ideas for a cyberpunk art scene",
+  "Write a Python script to rename files",
   "What is the current Bitcoin price?",
 ]
 
@@ -346,9 +346,9 @@ export default function ChatPage() {
           {messages.length === 0 ? (
             <div className="empty" style={{ height: '100%' }}>
               <div className="glyph">✦</div>
-              <h3>Start a conversation</h3>
-              <p>Ask anything, attach an image for vision analysis,
-                 or toggle <Globe size={12} style={{ verticalAlign: -2 }} /> for live web search.</p>
+              <h3>Hi, I'm {(status?.ai_name || 'Nova').charAt(0).toUpperCase() + (status?.ai_name || 'Nova').slice(1)} 👋</h3>
+              <p>Chat, <strong>generate images</strong>, write code, or ask about live info —
+                 attach an image for vision, or toggle <Globe size={12} style={{ verticalAlign: -2 }} /> for web search.</p>
               <div className="starter-chips">
                 {STARTERS.map((s) => (
                   <button key={s} className="starter-chip"
