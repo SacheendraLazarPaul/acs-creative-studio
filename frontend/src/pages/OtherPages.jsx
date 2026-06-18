@@ -271,6 +271,12 @@ export function GalleryPage() {
 /* ═══════════════════════════════════════════════════════════
    SETTINGS
 ═══════════════════════════════════════════════════════════ */
+// Classify Ollama models so each dropdown shows only relevant ones.
+const _VISION_HINTS = ['moondream', 'llava', 'bakllava', 'minicpm-v', 'vision', 'qwen2-vl', 'qwen2.5-vl', '-vl', 'llama3.2-vision']
+const isEmbedModel  = (m) => /embed|bge|nomic|e5|gte/i.test(m)
+const isVisionModel = (m) => _VISION_HINTS.some((h) => m.toLowerCase().includes(h))
+const isChatModel   = (m) => !isEmbedModel(m) && !isVisionModel(m)
+
 export function SettingsPage() {
   const { status, config, loadConfig, toast } = useStore()
   const [hf, setHf]                   = useState('')
@@ -715,17 +721,17 @@ export function SettingsPage() {
           ) : (
             <div className="grid-2">
               <div className="field" style={{ margin:0 }}>
-                <label>Text model</label>
+                <label>Text model <span className="muted" style={{ fontWeight:400 }}>(chat)</span></label>
                 <select className="select" value={textModel} onChange={(e)=>setTextModel(e.target.value)}>
                   {!textModel && <option value="">Select…</option>}
-                  {[...new Set([textModel, ...ollamaList].filter(Boolean))].map((m)=>(<option key={m} value={m}>{m}</option>))}
+                  {[...new Set([textModel, ...ollamaList.filter(isChatModel)].filter(Boolean))].map((m)=>(<option key={m} value={m}>{m}</option>))}
                 </select>
               </div>
               <div className="field" style={{ margin:0 }}>
-                <label>Vision model</label>
+                <label>Vision model <span className="muted" style={{ fontWeight:400 }}>(image understanding)</span></label>
                 <select className="select" value={visionModel} onChange={(e)=>setVisionModel(e.target.value)}>
                   {!visionModel && <option value="">Select…</option>}
-                  {[...new Set([visionModel, ...ollamaList].filter(Boolean))].map((m)=>(<option key={m} value={m}>{m}</option>))}
+                  {[...new Set([visionModel, ...ollamaList.filter(isVisionModel)].filter(Boolean))].map((m)=>(<option key={m} value={m}>{m}</option>))}
                 </select>
               </div>
             </div>
