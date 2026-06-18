@@ -86,6 +86,25 @@ def _gen_intent(message: str):
         return "image"
     return None
 
+# ── SFW prompt filter — blocks explicit image/video prompts at the source ───
+_NSFW_TERMS = {
+    "nude", "naked", "nudity", "nsfw", "porn", "porno", "xxx", "sex", "sexual",
+    "erotic", "erotica", "hentai", "explicit", "topless", "bottomless", "lingerie",
+    "underwear", "panties", "thong", "bikini", "cleavage", "breasts", "boobs", "tits",
+    "nipple", "nipples", "areola", "pussy", "vagina", "penis", "cock", "dick", "genital",
+    "genitalia", "cum", "cumshot", "blowjob", "anal", "orgasm", "masturbat", "fellatio",
+    "sensual", "seductive", "provocative", "fetish", "bdsm", "bondage", "rule34",
+    "onlyfans", "camgirl", "escort", "hooker", "slut", "milf", "creampie", "deepthroat",
+}
+_NSFW_RE = re.compile(r"\b(" + "|".join(re.escape(t) for t in _NSFW_TERMS) + r")", re.I)
+
+def _is_blocked_prompt(text: str) -> bool:
+    return bool(_NSFW_RE.search(text or ""))
+
+_BLOCK_MSG = ("I keep image and video generation strictly SFW, so I can't create that. "
+              "Try a non-explicit prompt — landscapes, characters (clothed), art styles, objects, etc.")
+
+
 def _clean_gen_prompt(message: str, history: list) -> str:
     """Turn a chat request into an image/video prompt."""
     msg = message.strip()
@@ -402,6 +421,12 @@ def chat_stream(req: ChatRequest):
         if _kind:
             _name = get_ai_persona().get("name", "Nova")
             prompt = _clean_gen_prompt(req.message, req.history)
+            # SFW guard — refuse explicit generation prompts.
+            if _is_blocked_prompt(req.message) or _is_blocked_prompt(prompt):
+                yield f"data: {json.dumps({'type':'delta','content':_BLOCK_MSG})}\n\n"
+                _save_turn(req.session_id, req.message, _BLOCK_MSG, model, now)
+                yield f"data: {json.dumps({'type':'done'})}\n\n"
+                return
             mode = "t2v" if _kind == "video" else "t2i"
             yield f"data: {json.dumps({'type':'gen_start','kind':_kind,'prompt':prompt})}\n\n"
 
@@ -589,6 +614,8 @@ class ComfyUIGenRequest(BaseModel):
 
 @router.post("/api/comfyui/generate")
 def comfyui_generate(req: ComfyUIGenRequest):
+    if _is_blocked_prompt(req.prompt):
+        return {"error": _BLOCK_MSG}
     url        = get_comfyui_url()
     seed       = req.seed if req.seed >= 0 else int(time.time()) % (2 ** 31)
     model_name = Path(req.model).name if req.model else ""
@@ -602,6 +629,9 @@ def comfyui_generate(req: ComfyUIGenRequest):
 # ── Generation ─────────────────────────────────────────────────────────────
 @router.post("/api/generate")
 def generate_ep(req: GenRequest):
+    # SFW guard — block explicit prompts at the generation layer.
+    if _is_blocked_prompt(req.prompt):
+        return {"error": _BLOCK_MSG}
     return generate(req)
 
 
