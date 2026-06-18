@@ -1,0 +1,15 @@
+{
+  "hf_token": "YOUR_HUGGINGFACE_TOKEN_HERE",
+  "civitai_token": "YOUR_CIVITAI_TOKEN_HERE",
+  "nsfw": false,
+  "first_run_done": false,
+  "downloaded_models": [],
+  "default_checkpoint": "",
+  "ollama_text_model": "dolphin-mistral",
+  "ollama_vision_model": "moondream",
+  "custom_models_dir": "",
+  "comfyui_dir": "C:/path/to/ComfyUI",
+  "comfyui_url": "http://localhost:8188",
+  "extra_scan_dirs": [],
+  "kk_install_path": "C:/path/to/KoikatsuSunshine"
+}

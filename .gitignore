@@ -1,0 +1,73 @@
+# === Private modules (local only) ===
+backend/search_adult.py
+backend/routes_adult.py
+
+# === Secrets & Config ===
+backend/config.json
+kk/config.json
+config.json
+
+# === Generated Outputs ===
+backend/outputs/
+kk/outputs/
+kk/voice/
+kk/renpy/
+
+# === AI Models (too large for Git) ===
+backend/models/
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.pkl
+
+# === Databases & Logs ===
+kk/story/*.db
+backend/chat_history.json
+backend/run.log
+*.log
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# === Node / Frontend ===
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# === Compiled Binaries ===
+kkbridge/*.dll
+kkbridge/*.exe
+kkbridge/bin/
+kkbridge/obj/
+
+# === Backup / Temp ===
+app_monolith_backup.py
+*.bak
+*.tmp
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.suo
+*.user
+
+# === Claude Code internal ===
+.claude/
