@@ -289,6 +289,38 @@ def _auto_find_checkpoint() -> str:
     return cps[0]["path"] if cps else ""
 
 
+# Native resolutions per architecture — generating far above these on SD1.5
+# causes the "doubled/repeated" artifact, so we match the model's sweet spot.
+_NATIVE_RES = {"sd15": (512, 768), "sd2": (768, 768), "sdxl": (1024, 1024),
+               "flux": (1024, 1024), "sd3": (1024, 1024), "auraflow": (1024, 1024)}
+
+def smart_gen_request(prompt: str, mode: str = "t2i") -> "GenRequest":
+    """Build a quality-tuned request for chat-driven generation: correct
+    resolution for the model, a VAE if available, hi-res fix for SD1.5."""
+    model = _auto_find_checkpoint() or ""
+    arch  = _detect_arch(model) if model else "sd15"
+    if mode in ("t2v", "i2v"):
+        return GenRequest(prompt=prompt, mode="t2v", width=512, height=320,
+                          steps=25, num_frames=25, fps=8)
+    w, h = _NATIVE_RES.get(arch, (512, 768))
+    vae = ""
+    try:
+        vaes = scan_models().get("vae", [])
+        if arch in ("sd15", "sd2") and vaes:
+            vae = vaes[0]["path"]
+    except Exception:
+        pass
+    return GenRequest(
+        prompt=prompt, model=model, mode="t2i",
+        width=w, height=h, steps=26, cfg=6.5,
+        hires_fix=False,  # native-res already fixes the SD1.5 "doubling"; hi-res is too slow on low VRAM
+        vae_path=vae,
+        negative="lowres, bad anatomy, bad hands, text, error, missing fingers, "
+                 "extra digit, fewer digits, cropped, worst quality, low quality, "
+                 "jpeg artifacts, signature, watermark, blurry, duplicate, deformed",
+    )
+
+
 def _detect_video_model_type(model_path: str) -> str:
     if not model_path:
         return "ltx"

@@ -33,7 +33,7 @@ from memory import (
 from downloads import DOWNLOADABLE_MODELS, _run_download
 from generation import (
     GenRequest, generate, get_comfyui_url,
-    _build_t2i_workflow, _comfyui_dispatch,
+    _build_t2i_workflow, _comfyui_dispatch, smart_gen_request,
 )
 
 import requests as _requests
@@ -408,7 +408,7 @@ def chat_stream(req: ChatRequest):
             result_holder: dict = {}
             def _run():
                 try:
-                    result_holder["result"] = generate(GenRequest(prompt=prompt, mode=mode))
+                    result_holder["result"] = generate(smart_gen_request(prompt, mode))
                 except Exception as e:
                     result_holder["error"] = str(e)
                 finally:
