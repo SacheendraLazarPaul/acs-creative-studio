@@ -37,10 +37,9 @@ def load_config() -> dict:
         "ollama_text_model":  "llama3",
         "ollama_vision_model": "moondream",
         "custom_models_dir": "",
-        "comfyui_dir": "",
+        "comfyui_dir": "",          # optional external models folder to scan
         "extra_scan_dirs": [],
         "civitai_token": "",
-        "comfyui_url": "http://localhost:8188",
         # Embedded local LLM engine (chat without Ollama)
         "use_local_engine": False,
         "local_gguf_path": "",

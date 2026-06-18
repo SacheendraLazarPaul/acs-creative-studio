@@ -447,58 +447,6 @@ def _load_wan_pipe(mode: str, model_path: str, device, dtype):
     return pipe
 
 
-# ── ComfyUI helpers ────────────────────────────────────────────────────────
-def get_comfyui_url() -> str:
-    return config.get("comfyui_url", "http://localhost:8188").rstrip("/")
-
-
-def _build_t2i_workflow(prompt, negative, model_name, width, height, steps, cfg, seed):
-    return {
-        "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": model_name}},
-        "2": {"class_type": "CLIPTextEncode",   "inputs": {"text": prompt,   "clip": ["1", 1]}},
-        "3": {"class_type": "CLIPTextEncode",   "inputs": {"text": negative, "clip": ["1", 1]}},
-        "4": {"class_type": "EmptyLatentImage", "inputs": {"width": width, "height": height, "batch_size": 1}},
-        "5": {"class_type": "KSampler", "inputs": {
-            "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0],
-            "latent_image": ["4", 0], "seed": seed, "steps": steps,
-            "cfg": cfg, "sampler_name": "euler", "scheduler": "normal", "denoise": 1.0,
-        }},
-        "6": {"class_type": "VAEDecode", "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
-        "7": {"class_type": "SaveImage", "inputs": {"images": ["6", 0], "filename_prefix": "ACS"}},
-    }
-
-
-def _comfyui_dispatch(workflow: dict, comfy_url: str, seed: int) -> dict:
-    """Send workflow to ComfyUI, poll for result, and return image dict."""
-    try:
-        r         = requests.post(f"{comfy_url}/prompt", json={"prompt": workflow}, timeout=15)
-        prompt_id = r.json().get("prompt_id")
-        if not prompt_id:
-            return {"error": f"ComfyUI rejected workflow: {r.text[:300]}"}
-    except Exception as e:
-        return {"error": f"Cannot reach ComfyUI at {comfy_url}. Is it running? ({e})"}
-
-    for _ in range(120):
-        time.sleep(1)
-        try:
-            hist = requests.get(f"{comfy_url}/history/{prompt_id}", timeout=5).json()
-            if prompt_id in hist:
-                for node_out in hist[prompt_id].get("outputs", {}).values():
-                    for img_info in node_out.get("images", []):
-                        img_r = requests.get(f"{comfy_url}/view", params={
-                            "filename": img_info["filename"],
-                            "subfolder": img_info.get("subfolder", ""),
-                            "type": img_info.get("type", "output"),
-                        }, timeout=15)
-                        fname = f"comfyui_{int(time.time())}_{seed}.png"
-                        (OUTPUT_DIR / fname).write_bytes(img_r.content)
-                        b64 = base64.b64encode(img_r.content).decode()
-                        return {"image": b64, "seed": seed, "filename": fname, "mode": "comfyui_t2i"}
-        except Exception:
-            continue
-    return {"error": "ComfyUI generation timed out after 120s."}
-
-
 # ── GGUF image generation via stable-diffusion.cpp ────────────────────────
 def _generate_sdcpp(req: GenRequest, seed: int) -> dict:
     try:

@@ -247,10 +247,9 @@ class ConfigUpdate(BaseModel):
     ollama_text_model:   Optional[str]  = None
     ollama_vision_model: Optional[str]  = None
     custom_models_dir:   Optional[str]  = None
-    comfyui_dir:         Optional[str]  = None
+    comfyui_dir:         Optional[str]  = None   # external models folder
     extra_scan_dirs:     Optional[list] = None
     civitai_token:       Optional[str]  = None
-    comfyui_url:         Optional[str]  = None
     use_local_engine:    Optional[bool] = None
     local_gguf_path:     Optional[str]  = None
 
