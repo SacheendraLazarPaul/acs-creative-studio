@@ -46,8 +46,6 @@ export const api = {
   scan:          () => j('/api/scan', { method: 'POST' }),
   findComfyUI:   () => j('/api/find-comfyui'),
   advisor:         (body) => j('/api/advisor', { method: 'POST', body }),
-  comfyuiStatus:   () => j('/api/comfyui/status'),
-  comfyuiGenerate: (body) => j('/api/comfyui/generate', { method: 'POST', body }),
   youtubeSearch:   (q) => j(`/api/search/youtube?q=${encodeURIComponent(q)}`),
   civitaiSearch:   (q) => j(`/api/search/civitai?q=${encodeURIComponent(q)}`),
   searchWikipedia: (q) => j(`/api/search/wikipedia?q=${encodeURIComponent(q)}`),

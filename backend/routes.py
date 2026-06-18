@@ -32,8 +32,7 @@ from memory import (
 )
 from downloads import DOWNLOADABLE_MODELS, _run_download
 from generation import (
-    GenRequest, generate, get_comfyui_url,
-    _build_t2i_workflow, _comfyui_dispatch, smart_gen_request,
+    GenRequest, generate, smart_gen_request,
 )
 
 import requests as _requests
@@ -589,41 +588,6 @@ def analyze_image(req: ImageAnalysisRequest):
     }
 
 
-# ── ComfyUI ────────────────────────────────────────────────────────────────
-@router.get("/api/comfyui/status")
-def comfyui_status_ep():
-    url = get_comfyui_url()
-    try:
-        r = _requests.get(f"{url}/system_stats", timeout=4)
-        d = r.json()
-        return {"connected": True, "url": url,
-                "version": d.get("system", {}).get("comfyui_version", "?")}
-    except Exception:
-        return {"connected": False, "url": url, "version": None}
-
-
-class ComfyUIGenRequest(BaseModel):
-    prompt:   str
-    negative: str   = "bad quality, blurry"
-    model:    str   = ""
-    width:    int   = 832
-    height:   int   = 1216
-    steps:    int   = 20
-    cfg:      float = 7.0
-    seed:     int   = -1
-
-@router.post("/api/comfyui/generate")
-def comfyui_generate(req: ComfyUIGenRequest):
-    if _is_blocked_prompt(req.prompt):
-        return {"error": _BLOCK_MSG}
-    url        = get_comfyui_url()
-    seed       = req.seed if req.seed >= 0 else int(time.time()) % (2 ** 31)
-    model_name = Path(req.model).name if req.model else ""
-    if not model_name:
-        return {"error": "Select a checkpoint model before using ComfyUI generation."}
-    workflow = _build_t2i_workflow(req.prompt, req.negative, model_name,
-                                   req.width, req.height, req.steps, req.cfg, seed)
-    return _comfyui_dispatch(workflow, url, seed)
 
 
 # ── Generation ─────────────────────────────────────────────────────────────

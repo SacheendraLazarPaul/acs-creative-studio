@@ -13,7 +13,7 @@ const NAV2 = [
 ]
 
 export default function Sidebar() {
-  const { status, statusError, comfyuiStatus } = useStore()
+  const { status, statusError } = useStore()
   const gpu = status?.cuda
     ? `${status.vram_gb ?? '?'}GB GPU`
     : status ? 'CPU only' : '—'
@@ -50,11 +50,6 @@ export default function Sidebar() {
           <span className={'dot ' + (statusError ? 'off' : status?.ollama ? 'on' : 'warn')} />
           <Server size={12} />
           Ollama {statusError ? 'offline' : status?.ollama ? 'ready' : 'connecting…'}
-        </div>
-        <div className="status-pill">
-          <span className={'dot ' + (comfyuiStatus?.connected ? 'on' : 'warn')} />
-          <Layers size={12} />
-          ComfyUI {comfyuiStatus?.connected ? `v${comfyuiStatus.version}` : 'offline'}
         </div>
         <div className="status-pill">
           <span className={'dot ' + (status?.cuda ? 'on' : 'warn')} />

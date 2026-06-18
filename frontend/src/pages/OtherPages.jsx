@@ -284,7 +284,6 @@ export function SettingsPage() {
   const [textModel, setTextModel]     = useState('')
   const [visionModel, setVisionModel] = useState('')
   const [comfyuiDir, setComfyuiDir]   = useState('')
-  const [comfyuiUrl, setComfyuiUrl]   = useState('http://localhost:8188')
   const [extraDirs, setExtraDirs]     = useState([])
   const [ollamaList, setOllamaList]   = useState([])
   const [pullName, setPullName]       = useState('')
@@ -302,8 +301,6 @@ export function SettingsPage() {
   const [foundPaths, setFoundPaths]   = useState([])
   const [scanResult, setScanResult]   = useState(null)
   const [didSearch, setDidSearch]     = useState(false)
-  const [testingComfy, setTestingComfy] = useState(false)
-  const [comfyTestResult, setComfyTestResult] = useState(null)
   const [memory, setMemory]         = useState({ facts: [], preferences: [] })
   const [newFact, setNewFact]       = useState('')
   const [newPref, setNewPref]       = useState('')
@@ -314,7 +311,6 @@ export function SettingsPage() {
       setTextModel(config.ollama_text_model ?? '')
       setVisionModel(config.ollama_vision_model ?? '')
       setComfyuiDir(config.comfyui_dir ?? '')
-      setComfyuiUrl(config.comfyui_url ?? 'http://localhost:8188')
       setExtraDirs(config.extra_scan_dirs ?? [])
       setUseLocalEngine(!!config.use_local_engine)
       setLocalGguf(config.local_gguf_path ?? '')
@@ -394,7 +390,6 @@ export function SettingsPage() {
         ollama_text_model: textModel,
         ollama_vision_model: visionModel,
         comfyui_dir: comfyuiDir,
-        comfyui_url: comfyuiUrl,
         extra_scan_dirs: extraDirs.filter(Boolean),
         use_local_engine: useLocalEngine,
         local_gguf_path: localGguf,
@@ -408,16 +403,6 @@ export function SettingsPage() {
     finally { setSaving(false) }
   }
 
-  const testComfyUI = async () => {
-    setTestingComfy(true); setComfyTestResult(null)
-    try {
-      await api.setConfig({ comfyui_url: comfyuiUrl })
-      const r = await api.comfyuiStatus()
-      setComfyTestResult(r)
-      toast(r.connected ? `ComfyUI connected — v${r.version} ✓` : 'ComfyUI not reachable', r.connected ? 'ok' : 'err')
-    } catch (e) { toast(e.message, 'err') }
-    finally { setTestingComfy(false) }
-  }
 
   const scan = async () => {
     setScanning(true); setScanResult(null)
@@ -460,20 +445,19 @@ export function SettingsPage() {
         <div className="panel" style={{ marginBottom:14 }}>
           <div className="panel-title">
             <span style={{ marginRight:8 }}>🔍</span>
-            Step 1 — Find your models folder
+            Step 1 — Models folder (optional)
           </div>
           <p className="muted" style={{ fontSize:13, lineHeight:1.65, marginBottom:16 }}>
-            Click <strong style={{ color:'var(--text)' }}>Auto-detect ComfyUI</strong> — the app will search
-            all drives (<span className="kbd">C:\</span> <span className="kbd">D:\</span> etc.) for a ComfyUI
-            installation and find its <span className="kbd">models\</span> folder automatically.
-            If you have models elsewhere, add the path manually below.
+            Optional — if you already have a folder of models (from another AI tool), click below to scan
+            all drives (<span className="kbd">C:\</span> <span className="kbd">D:\</span> etc.) for it. Otherwise just drop
+            models into the app's own <span className="kbd">backend\models\</span> folder.
           </p>
 
           <button className="btn btn-primary" onClick={findComfyUI} disabled={finding}
             style={{ marginBottom:14 }}>
             {finding
               ? <><span className="spinner"/> Searching all drives…</>
-              : <><Search size={16}/> Auto-detect ComfyUI</>}
+              : <><Search size={16}/> Scan drives for model folders</>}
           </button>
 
           {/* found results */}
@@ -485,13 +469,12 @@ export function SettingsPage() {
                 borderRadius:'var(--r-md)', fontSize:13, color:'var(--text-dim)',
               }}>
                 <AlertCircle size={16} style={{ color:'var(--rose)', flexShrink:0 }}/>
-                No ComfyUI installation found automatically.
-                Enter the path to your models folder manually in the field below.
+                No external model folder found. You can enter a path manually below, or just use the app's own models folder.
               </div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 <div className="muted" style={{ fontSize:12, marginBottom:4 }}>
-                  Found {foundPaths.length} installation{foundPaths.length>1?'s':''} — click to use:
+                  Found {foundPaths.length} model folder{foundPaths.length>1?'s':''} — click to use:
                 </div>
                 {foundPaths.map((p) => (
                   <button key={p}
@@ -521,10 +504,10 @@ export function SettingsPage() {
           {/* manual path input */}
           <div style={{ marginTop:14 }}>
             <div className="field" style={{ margin:0 }}>
-              <label>ComfyUI folder path (manual)</label>
+              <label>External models folder (optional)</label>
               <input className="input" value={comfyuiDir}
                 onChange={(e) => setComfyuiDir(e.target.value)}
-                placeholder="e.g. C:\ComfyUI  or  D:\AI\ComfyUI_windows_portable"/>
+                placeholder="e.g. D:\AI\models"/>
             </div>
             {comfyuiDir && (
               <div className="muted" style={{ fontSize:11.5, marginTop:6 }}>
@@ -571,7 +554,7 @@ export function SettingsPage() {
           <p className="muted" style={{ fontSize:12.5, marginBottom:14 }}>
             Scans every configured directory instantly. Detects checkpoints, LoRAs, VAE,
             text encoders (CLIP, T5), ControlNet, upscalers, WAN, IP-Adapters,
-            embeddings — everything ComfyUI uses.
+            embeddings — every model type the studio supports.
           </p>
 
           <button className="btn btn-primary btn-full" style={{ marginBottom:14 }}
@@ -773,33 +756,6 @@ export function SettingsPage() {
           <p className="muted" style={{ fontSize:12, marginTop:8 }}>
             Get your key at <span className="kbd">civitai.com → Account → API Keys</span>
           </p>
-        </div>
-
-        {/* ── ComfyUI Connection ── */}
-        <div className="panel" style={{ marginBottom:14 }}>
-          <div className="panel-title"><Layers size={13} style={{ verticalAlign:-2, marginRight:6 }}/>ComfyUI connection</div>
-          <p className="muted" style={{ fontSize:12.5, marginBottom:12 }}>
-            Connect to a running ComfyUI instance to route generation through it.
-            Default: <span className="kbd">http://localhost:8188</span>
-          </p>
-          <div className="field" style={{ marginBottom:10 }}>
-            <label>ComfyUI API URL</label>
-            <div className="row">
-              <input className="input" value={comfyuiUrl}
-                onChange={(e)=>setComfyuiUrl(e.target.value)}
-                placeholder="http://localhost:8188"/>
-              <button className="btn btn-sm" onClick={testComfyUI} disabled={testingComfy}>
-                {testingComfy ? <span className="spinner"/> : 'Test'}
-              </button>
-            </div>
-          </div>
-          {comfyTestResult && (
-            <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12.5 }}>
-              {comfyTestResult.connected
-                ? <><CheckCircle2 size={14} style={{ color:'var(--green)' }}/> Connected — v{comfyTestResult.version}</>
-                : <><AlertCircle size={14} style={{ color:'var(--rose)' }}/> Not reachable — is ComfyUI running?</>}
-            </div>
-          )}
         </div>
 
         <button className="btn btn-primary" onClick={save} disabled={saving} style={{ marginBottom:22 }}>

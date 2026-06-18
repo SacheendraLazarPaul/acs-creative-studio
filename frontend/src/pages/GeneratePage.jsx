@@ -424,7 +424,7 @@ const NEG_PRESETS = [
 const _loadSettings = () => { try { return JSON.parse(localStorage.getItem('acs_settings') || '{}') } catch { return {} } }
 
 export default function GeneratePage() {
-  const { status, toast, comfyuiStatus, pendingRef, clearPendingRef } = useStore()
+  const { status, toast, pendingRef, clearPendingRef } = useStore()
   const _s = useRef(_loadSettings()).current
 
   const [mode, setMode]         = useState(_s.mode      || 't2i')
@@ -492,7 +492,6 @@ export default function GeneratePage() {
   const [advisorGoal, setAdvisorGoal]   = useState('')
   const [advisorResult, setAdvisorResult] = useState(null)
   const [advisorBusy, setAdvisorBusy]   = useState(false)
-  const [useComfyUI, setUseComfyUI]     = useState(_s.useComfyUI   ?? false)
 
   const [upscaleFactor, setUpscaleFactor] = useState(_s.upscaleFactor ?? 4)
 
@@ -557,7 +556,7 @@ export default function GeneratePage() {
           mode, prompt, negative, w, h, steps, cfg, strength, seed,
           frames, fps, consistency, checkpoint, videoModel, manualCheckpoint,
           activeLoras, controlnet, cnStrength, upscaleFactor,
-          hiresFix, hiresScale, hiresStrength, batchSize, useComfyUI,
+          hiresFix, hiresScale, hiresStrength, batchSize,
           scheduler, vaePath, clipSkip, seamless, outpaintPx,
         }))
       } catch {}
@@ -566,7 +565,7 @@ export default function GeneratePage() {
   }, [mode, prompt, negative, w, h, steps, cfg, strength, seed,
       frames, fps, consistency, checkpoint, videoModel, manualCheckpoint,
       activeLoras, controlnet, cnStrength, upscaleFactor,
-      hiresFix, hiresScale, hiresStrength, batchSize, useComfyUI,
+      hiresFix, hiresScale, hiresStrength, batchSize,
       scheduler, vaePath, clipSkip, seamless, outpaintPx])
 
   const isVideo    = mode === 't2v' || mode === 'i2v'
@@ -912,20 +911,6 @@ export default function GeneratePage() {
     if (mode === 'inpaint' && !maskImage) return toast('Paint a mask on the image first', 'info')
     setBusy(true); setResult(null); setBatchResults([]); setCompareMode(false)
     pushHistory(prompt)
-
-    if (useComfyUI) {
-      if (!effectiveCheckpoint) return (setBusy(false), toast('Select a checkpoint for ComfyUI generation', 'info'))
-      try {
-        const r = await api.comfyuiGenerate({
-          prompt, negative, model: effectiveCheckpoint,
-          width: w, height: h, steps, cfg: parseFloat(cfg), seed: parseInt(seed),
-        })
-        if (r.error) { toast(r.error, 'err'); return }
-        setResult(r); toast('ComfyUI done ✓', 'ok')
-      } catch (e) { toast(e.message, 'err') }
-      finally { setBusy(false) }
-      return
-    }
 
     try {
       const payload = {
@@ -1746,17 +1731,8 @@ export default function GeneratePage() {
               )}
             </div>
 
-            {/* ComfyUI + generate button */}
+            {/* Generate button */}
             <div className="gen-bottom">
-              <div className="gen-comfyui">
-                <Layers size={13} style={{ color: comfyuiStatus?.connected ? 'var(--green)' : 'var(--text-faint)' }}/>
-                <span>ComfyUI {comfyuiStatus?.connected ? `v${comfyuiStatus.version}` : '— offline'}</span>
-                <label style={{ marginLeft:'auto', cursor: comfyuiStatus?.connected ? 'pointer' : 'not-allowed' }}>
-                  <input type="checkbox" checked={useComfyUI} disabled={!comfyuiStatus?.connected}
-                    onChange={(e) => setUseComfyUI(e.target.checked)} style={{ display:'none' }}/>
-                  <div className={'toggle-track' + (useComfyUI ? ' on' : '')}><div className="toggle-knob"/></div>
-                </label>
-              </div>
               <div className="batch-row">
                 <span className="batch-label">Batch</span>
                 {[1,2,4,8].map((n) => (
@@ -1767,11 +1743,9 @@ export default function GeneratePage() {
               <button className="btn btn-primary btn-full gen-run-btn" onClick={run} disabled={working}>
                 {working
                   ? <><span className="spinner"/> Generating…</>
-                  : useComfyUI
-                    ? <><Layers size={15}/> Generate via ComfyUI</>
-                    : batchSize > 1
-                      ? <><Sparkles size={15}/> Generate {batchSize}×</>
-                      : <><Sparkles size={15}/> Generate</>}
+                  : batchSize > 1
+                    ? <><Sparkles size={15}/> Generate {batchSize}×</>
+                    : <><Sparkles size={15}/> Generate</>}
               </button>
             </div>
 

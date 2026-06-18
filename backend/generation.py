@@ -842,19 +842,10 @@ def generate(req: GenRequest) -> dict:
             vtype = _detect_video_model_type(effective_model)
 
             if vtype == "wan_gguf":
-                comfy_url = get_comfyui_url()
-                try:
-                    requests.get(f"{comfy_url}/system_stats", timeout=3)
-                    workflow = _build_t2i_workflow(
-                        req.prompt, req.negative, Path(effective_model).stem,
-                        req.width, req.height, req.steps, req.cfg, seed,
-                    )
-                    return _comfyui_dispatch(workflow, comfy_url, seed)
-                except Exception:
-                    return {"error": (
-                        "GGUF video models need ComfyUI with kijai-nodes installed. "
-                        "Start ComfyUI → set its URL in Settings, or pick a .safetensors Wan model."
-                    )}
+                return {"error": (
+                    "GGUF video models aren't supported by the built-in engine. "
+                    "Use a .safetensors Wan or LTX video model instead."
+                )}
 
             elif vtype in ("wan_safetensors", "unknown") and effective_model and Path(effective_model).exists():
                 try:

@@ -6,7 +6,6 @@ export const useStore = create((set, get) => ({
   statusError: false,
   config: null,
   toasts: [],
-  comfyuiStatus: null,
   pendingRef: null,
   setPendingRef: (image, mode = 'i2i') => set({ pendingRef: { image, mode } }),
   clearPendingRef: () => set({ pendingRef: null }),
@@ -22,20 +21,13 @@ export const useStore = create((set, get) => ({
     catch { set({ statusError: true }) }
   },
 
-  fetchComfyUIStatus: async () => {
-    try { set({ comfyuiStatus: await api.comfyuiStatus() }) }
-    catch { set({ comfyuiStatus: { connected: false } }) }
-  },
-
   _pollIds: [],
   startPolling: () => {
     const { _pollIds } = get()
     if (_pollIds.length > 0) return        // already running — don't stack
     get().fetchStatus()
-    get().fetchComfyUIStatus()
     const ids = [
       setInterval(() => get().fetchStatus(), 5000),
-      setInterval(() => get().fetchComfyUIStatus(), 8000),
     ]
     set({ _pollIds: ids })
   },
