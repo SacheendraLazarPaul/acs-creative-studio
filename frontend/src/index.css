@@ -32,6 +32,45 @@
   --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 22px;
 }
 
+/* ── Light theme ─────────────────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --ink-950: #eef1f7;
+  --ink-900: #ffffff;
+  --ink-850: #f6f8fc;
+  --ink-800: #eef1f7;
+  --ink-750: #e7ebf3;
+  --ink-700: #dde3ee;
+  --ink-600: #ccd5e6;
+  --line:    #dbe1ec;
+  --line-soft: #e7ebf3;
+  --line-lg: #c7d0e0;
+
+  --text:      #1a2233;
+  --text-dim:  #55607a;
+  --text-faint:#9aa3ba;
+
+  --amber:        #e8920a;
+  --amber-bright: #c97a00;
+  --amber-glow:   rgba(232,146,10,.14);
+  --cyan:         #0ba6b4;
+  --cyan-bright:  #0890a0;
+  --violet:       #7c5cf0;
+  --rose:         #e04848;
+  --green:        #1f9d54;
+}
+:root[data-theme="light"] body::before{
+  background:
+    radial-gradient(ellipse 1000px 600px at 0% -10%, rgba(232,146,10,.06) 0%,transparent 60%),
+    radial-gradient(ellipse 800px 700px at 100% 5%,  rgba(11,166,180,.05) 0%,transparent 55%),
+    radial-gradient(ellipse 600px 800px at 80% 100%, rgba(124,92,240,.05) 0%,transparent 60%);
+}
+/* Light-mode fixes for hardcoded dark surfaces */
+:root[data-theme="light"] .topbar{ background:rgba(255,255,255,.78); }
+:root[data-theme="light"] .code-header{ background:var(--ink-800); }
+/* Smooth theme switch */
+body, .panel, .sidebar, .topbar, .card, .input, .select, .btn, .chip, .msg-text,
+.code-block, .md-pre { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body,#root{height:100%;}
 
@@ -1028,3 +1067,13 @@ a{color:inherit;text-decoration:none;}
 .compare-result-col img{width:100%;border-radius:var(--r-md);display:block;}
 .compare-label{font-size:11px;text-align:center;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+
+/* ── Theme toggle + polish ───────────────────────────────────────────────── */
+.theme-toggle{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:5px;
+  transition:background-color .2s ease,transform .12s ease;}
+.theme-toggle:hover{background:var(--ink-700);transform:translateY(-1px);}
+.btn-primary{transition:transform .12s ease,box-shadow .2s ease,filter .2s ease;}
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.05);}
+.btn-primary:active{transform:translateY(0);}
+.nav-item{transition:background-color .18s ease,color .18s ease;}
+.chip{transition:background-color .2s ease;}
