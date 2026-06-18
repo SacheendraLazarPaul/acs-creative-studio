@@ -125,6 +125,7 @@ export const chatStream = async (body, onDelta, onMeta, onDone, onError, signal)
         else if (evt.type === 'done') onDone()
         else if (evt.type === 'error') onError(evt.message)
         else if (evt.type === 'searching') onMeta({ searching: true, searched: false, sources: [] })
+        else if (evt.type === 'gen_start' || evt.type === 'gen_progress' || evt.type === 'gen_done') onMeta(evt)
       } catch {}
     }
   }

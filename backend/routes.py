@@ -70,6 +70,37 @@ def _scrub_identity(text: str, name: str) -> str:
     return text
 
 
+# ── Image / video generation intent (chat-triggered) ───────────────────────
+_VIDEO_INTENT = re.compile(r"\b(make|create|generate|render|produce)\b.{0,20}\b(video|clip|animation|gif)\b|"
+                           r"\b(video|clip|animation)\b.{0,15}\b(of|for|about)\b", re.I)
+_IMAGE_INTENT = re.compile(r"\b(make|create|generate|draw|paint|render|design|produce|give\s+me)\b.{0,24}"
+                           r"\b(image|picture|pic|art|artwork|photo|drawing|illustration|wallpaper|logo|scene)\b|"
+                           r"\b(draw|paint|generate|render)\s+(me\s+)?(a|an|the)\b", re.I)
+# Short confirmations that should reuse the previous described scene.
+_CONFIRM = re.compile(r"^\s*(ok(ay)?|yes|yep|sure|do it|go ahead|create it|make it|generate it|please)\b", re.I)
+
+def _gen_intent(message: str):
+    if _VIDEO_INTENT.search(message):
+        return "video"
+    if _IMAGE_INTENT.search(message):
+        return "image"
+    return None
+
+def _clean_gen_prompt(message: str, history: list) -> str:
+    """Turn a chat request into an image/video prompt."""
+    msg = message.strip()
+    # Pure confirmation ("ok create it") → reuse the assistant's last description.
+    if _CONFIRM.match(msg) and len(msg.split()) <= 4 and history:
+        for h in reversed(history):
+            if h.get("role") == "assistant" and len(h.get("content", "")) > 20:
+                return h["content"].strip()[:600]
+    # Otherwise strip the command words and keep the subject.
+    cleaned = re.sub(r"\b(can you|could you|please|for me|make|create|generate|draw|paint|render|design|produce|"
+                     r"give me|a|an|the|image|picture|pic|photo|video|clip|animation|of|me)\b", " ", msg, flags=re.I)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,.-")
+    return cleaned if len(cleaned) >= 3 else msg
+
+
 # ── GPU info — detected once at startup, never again ───────────────────────
 _gpu_info: dict = {"cuda": False, "gpu": "CPU only", "vram_gb": 0}
 
@@ -366,6 +397,51 @@ def chat_stream(req: ChatRequest):
     system_prompt = get_system_prompt(model)
 
     def generate_stream():
+        # ── Image / video generation intent — actually run the pipeline ──────
+        _kind = _gen_intent(req.message)
+        if _kind:
+            _name = get_ai_persona().get("name", "Nova")
+            prompt = _clean_gen_prompt(req.message, req.history)
+            mode = "t2v" if _kind == "video" else "t2i"
+            yield f"data: {json.dumps({'type':'gen_start','kind':_kind,'prompt':prompt})}\n\n"
+
+            result_holder: dict = {}
+            def _run():
+                try:
+                    result_holder["result"] = generate(GenRequest(prompt=prompt, mode=mode))
+                except Exception as e:
+                    result_holder["error"] = str(e)
+                finally:
+                    result_holder["finished"] = True
+
+            t = threading.Thread(target=_run, daemon=True); t.start()
+            t0 = time.time()
+            last_pct = -1
+            while not result_holder.get("finished"):
+                time.sleep(0.5)
+                pct = int(state.get("gen_progress", 0) or 0)
+                elapsed = time.time() - t0
+                eta = int(elapsed / pct * (100 - pct)) if pct > 3 else 0
+                if pct != last_pct:
+                    last_pct = pct
+                    yield f"data: {json.dumps({'type':'gen_progress','pct':pct,'log':state.get('gen_log',''),'eta':eta,'elapsed':int(elapsed)})}\n\n"
+            if result_holder.get("error"):
+                msg = f"Sorry, I couldn't generate that {_kind}: {result_holder['error']}"
+                yield f"data: {json.dumps({'type':'delta','content':msg})}\n\n"
+                _save_turn(req.session_id, req.message, msg, model, now)
+                yield f"data: {json.dumps({'type':'done'})}\n\n"
+                return
+            res = result_holder.get("result", {})
+            fname = res.get("filename", "")
+            url = f"/outputs/{fname}" if fname else ""
+            yield f"data: {json.dumps({'type':'gen_done','kind':_kind,'url':url,'prompt':prompt})}\n\n"
+            saved = (f"Here's the {_kind} I generated:\n\n"
+                     + (f"![{prompt[:60]}]({url})" if _kind == "image" else f"[▶ Watch video]({url})")
+                     + f"\n\n*Prompt: {prompt[:200]}*")
+            _save_turn(req.session_id, req.message, saved, model, now)
+            yield f"data: {json.dumps({'type':'done'})}\n\n"
+            return
+
         # Search runs inside the generator so the SSE connection opens immediately
         # and the client sees typing dots instead of a blank screen during search.
         if req.with_search:

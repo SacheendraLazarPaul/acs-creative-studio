@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Plus, Trash2, Send, Globe, ImagePlus, Sparkles, MessageSquare, X, ExternalLink, Pause, Play, Square, Copy, Download, Check } from 'lucide-react'
-import { chatStream, api, fileToB64 } from '../api'
+import { chatStream, api, fileToB64, fmtETA } from '../api'
 import { useStore } from '../store'
 
 const ANALYSIS_TASKS = ['describe','pose','style','prompt','character','translate']
@@ -106,6 +106,23 @@ function MsgText({ text, streaming }) {
         )
       })}
       {streaming && segments.length === 0 && <span className="stream-cursor" />}
+    </div>
+  )
+}
+
+// Pull a generated /outputs media URL out of saved message text (reloaded sessions).
+function extractMedia(text) {
+  if (!text) return null
+  const m = text.match(/\/outputs\/[^\s)"']+\.(png|jpg|jpeg|webp|mp4|webm|gif)/i)
+  return m ? m[0] : null
+}
+function MediaOut({ url }) {
+  const isVideo = /\.(mp4|webm)$/i.test(url)
+  return (
+    <div className="gen-box">
+      {isVideo
+        ? <video className="gen-out" src={url} controls loop muted />
+        : <img className="gen-out" src={url} alt="generated" loading="lazy" />}
     </div>
   )
 }
@@ -249,13 +266,18 @@ export default function ChatPage() {
           msg._id === botId ? { ...msg, content: msg.content + delta } : msg
         ))
       },
-      (meta) => setMessages((m) => m.map((msg) =>
-        msg._id === botId
-          ? meta.searching
-            ? { ...msg, searching: true }
-            : { ...msg, searching: false, searched: meta.searched, sources: meta.sources || [] }
-          : msg
-      )),
+      (meta) => setMessages((m) => m.map((msg) => {
+        if (msg._id !== botId) return msg
+        if (meta.type === 'gen_start')
+          return { ...msg, searching: false, gen: { kind: meta.kind, pct: 0, eta: 0, log: 'Starting…', active: true } }
+        if (meta.type === 'gen_progress')
+          return { ...msg, gen: { ...(msg.gen || {}), pct: meta.pct, eta: meta.eta, log: meta.log, active: true } }
+        if (meta.type === 'gen_done')
+          return { ...msg, gen: { ...(msg.gen || {}), active: false, url: meta.url, kind: meta.kind } }
+        return meta.searching
+          ? { ...msg, searching: true }
+          : { ...msg, searching: false, searched: meta.searched, sources: meta.sources || [] }
+      })),
       () => {
         // flush any remaining buffered text on done
         const buf = pauseBuf.current
@@ -347,6 +369,28 @@ export default function ChatPage() {
                     </div>
                     {m.role === 'user' ? (
                       <div className="msg-text" style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+                    ) : m.gen ? (
+                      <div className="gen-box">
+                        {m.gen.active ? (
+                          <div className="gen-progress">
+                            <div className="gen-progress-head">
+                              <span>{m.gen.kind === 'video' ? '🎬 Generating video…' : '🎨 Generating image…'}</span>
+                              <span className="gen-pct">{m.gen.pct ?? 0}%</span>
+                            </div>
+                            <div className="gen-bar"><div className="gen-bar-fill" style={{ width: `${m.gen.pct ?? 0}%` }} /></div>
+                            <div className="gen-meta">
+                              <span>{m.gen.log || 'Working…'}</span>
+                              <span>{m.gen.eta ? `~${fmtETA(m.gen.eta)} left` : ''}</span>
+                            </div>
+                          </div>
+                        ) : m.gen.url ? (
+                          m.gen.kind === 'video'
+                            ? <video className="gen-out" src={m.gen.url} controls autoPlay loop muted />
+                            : <img className="gen-out" src={m.gen.url} alt="generated" loading="lazy" />
+                        ) : <MsgText text={m.content} streaming={false} />}
+                      </div>
+                    ) : extractMedia(m.content) ? (
+                      <MediaOut url={extractMedia(m.content)} />
                     ) : m.searching ? (
                       <div className="typing-search">
                         <Globe size={13} style={{ color: 'var(--cyan-bright)', flexShrink: 0 }} />
