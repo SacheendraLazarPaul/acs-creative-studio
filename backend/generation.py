@@ -611,6 +611,51 @@ def _outpaint_prep(ref_b64: str, px: int):
 
 
 # ── Main generate() ────────────────────────────────────────────────────────
+def _generate_animatediff(req: GenRequest, seed: int, device, dtype, gen) -> dict:
+    """Text-to-video by animating an SD1.5 checkpoint with a motion adapter.
+    The lightest video option — actually runs on low-VRAM GPUs. SFW (the prompt
+    is already filtered upstream). The motion adapter auto-downloads once."""
+    import torch
+    ckpt = _auto_find_checkpoint()
+    if not ckpt or _detect_arch(ckpt) != "sd15":
+        return {"error": "AnimateDiff needs an SD 1.5 checkpoint in models/checkpoints/."}
+    try:
+        from diffusers import (AnimateDiffPipeline, MotionAdapter, UNetMotionModel,
+                               StableDiffusionPipeline, DDIMScheduler)
+        state.update({"gen_log": "Loading motion adapter…", "gen_progress": 8})
+        adapter = MotionAdapter.from_pretrained(
+            "guoyww/animatediff-motion-adapter-v1-5-3", torch_dtype=dtype)
+        state.update({"gen_log": "Loading SD1.5 base…", "gen_progress": 18})
+        base = StableDiffusionPipeline.from_single_file(ckpt, torch_dtype=dtype, safety_checker=None)
+        unet_motion = UNetMotionModel.from_unet2d(base.unet, adapter)
+        pipe = AnimateDiffPipeline(
+            vae=base.vae, text_encoder=base.text_encoder, tokenizer=base.tokenizer,
+            unet=unet_motion, motion_adapter=adapter,
+            scheduler=DDIMScheduler.from_config(
+                base.scheduler.config, clip_sample=False,
+                beta_schedule="linear", timestep_spacing="linspace", steps_offset=1),
+        )
+        pipe.enable_vae_slicing()
+        try:
+            pipe.enable_sequential_cpu_offload()   # keeps VRAM tiny for 6GB cards
+        except Exception:
+            pipe.to(device)
+        frames = min(max(req.num_frames, 8), 24)
+        nsteps = min(max(req.steps, 18), 28)
+        state.update({"gen_log": f"Animating ({frames} frames)…", "gen_progress": 30,
+                      "gen_status": "generating"})
+        out = pipe(
+            prompt=req.prompt,
+            negative_prompt=req.negative or "blurry, low quality, watermark, distorted",
+            num_frames=frames, guidance_scale=max(req.cfg, 7.0),
+            num_inference_steps=nsteps, width=512, height=512, generator=gen,
+            callback_on_step_end=_step_cb(nsteps),
+        )
+        return _save_video(out.frames[0], seed, req.fps or 8, "t2v", req)
+    except Exception as e:
+        return {"error": f"AnimateDiff error: {e}"}
+
+
 def generate(req: GenRequest) -> dict:
     req = req.model_copy(update={
         "prompt":   _expand_wildcards(req.prompt),
@@ -788,6 +833,15 @@ def generate(req: GenRequest) -> dict:
 
         elif req.mode in ("t2v", "i2v", "t2i2v"):
             vtype = _detect_video_model_type(effective_model)
+
+            # AnimateDiff — default text→video engine (lightest, runs on 6GB by
+            # animating the SD1.5 checkpoint). Used when no specific video model
+            # is selected and mode is t2v.
+            if req.mode == "t2v" and not (effective_model and Path(str(effective_model)).exists()):
+                ad = _generate_animatediff(req, seed, device, dtype, gen)
+                if not (isinstance(ad, dict) and ad.get("error")):
+                    return ad
+                # else fall through to LTX as a backup
 
             if vtype == "wan_gguf":
                 return {"error": (

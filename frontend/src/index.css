@@ -1094,3 +1094,12 @@ a{color:inherit;text-decoration:none;}
 .gen-out{max-width:100%;width:auto;max-height:520px;border-radius:var(--r-md);
   border:1px solid var(--line);display:block;animation:genIn .3s ease;}
 @keyframes genIn{from{opacity:0;transform:scale(.98);}to{opacity:1;transform:none;}}
+
+/* ── Generate: quick quality presets ─────────────────────────────────────── */
+.quality-presets{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap;}
+.quality-label{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-faint);font-weight:700;margin-right:2px;}
+.quality-btn{padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;
+  background:var(--ink-850);border:1px solid var(--line);color:var(--text-dim);
+  transition:all .15s ease;}
+.quality-btn:hover{border-color:var(--line-lg);color:var(--text);transform:translateY(-1px);}
+.quality-btn.active{background:linear-gradient(135deg,var(--amber),var(--rose));color:#1a0800;border-color:transparent;}

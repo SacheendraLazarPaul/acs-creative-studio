@@ -1495,6 +1495,15 @@ export default function GeneratePage() {
               )}
 
               <div className="panel-title">Parameters</div>
+              <div className="quality-presets">
+                <span className="quality-label">Quality</span>
+                {[['Fast', 12, 6], ['Balanced', 26, 6.5], ['High', 40, 7]].map(([lbl, st, cf]) => (
+                  <button key={lbl}
+                    className={'quality-btn' + (steps === st ? ' active' : '')}
+                    onClick={() => { setSteps(st); setCfg(cf) }}
+                    title={`${st} steps · CFG ${cf}`}>{lbl}</button>
+                ))}
+              </div>
               <div className="params-grid">
                 <div className="param-item">
                   <div className="range-row">
