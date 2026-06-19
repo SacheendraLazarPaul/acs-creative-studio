@@ -1,11 +1,13 @@
-# === Private modules (local only) ===
-backend/search_adult.py
-backend/routes_adult.py
-
 # === Secrets & Config ===
 backend/config.json
-kk/config.json
 config.json
+
+# === Personal data (never publish) ===
+backend/data/
+backend/data/memory.json
+**/memory.json
+backend/chat_history.json
+chat_history.json
 
 # === Generated Outputs ===
 backend/outputs/

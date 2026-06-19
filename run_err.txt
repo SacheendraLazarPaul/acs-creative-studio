@@ -1,0 +1,26 @@
+INFO:     Started server process [4448]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:7860 (Press CTRL+C to quit)
+Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+Traceback (most recent call last):
+  File "C:\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+Traceback (most recent call last):
+  File "C:\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+Fetching 11 files:   0%|          | 0/11 [00:00<?, ?it/s]Fetching 11 files: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 11/11 [00:00<?, ?it/s]
+Loading pipeline components...:   0%|          | 0/6 [00:00<?, ?it/s]Loading pipeline components...:  67%|\u2588\u2588\u2588\u2588\u2588\u2588\u258b   | 4/6 [00:00<00:00, 34.55it/s]Loading pipeline components...: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 6/6 [00:00<00:00, 16.51it/s]
+You have disabled the safety checker for <class 'diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion.StableDiffusionPipeline'> by passing `safety_checker=None`. Ensure that you abide to the conditions of the Stable Diffusion license and do not expose unfiltered results in services or applications open to the public. Both the diffusers team and Hugging Face strongly recommend to keep the safety filter enabled in all public facing circumstances, disabling it only for use-cases that involve analyzing network behavior or auditing its results. For more information, please have a look at https://github.com/huggingface/diffusers/pull/254 .
+C:\Python312\Lib\site-packages\diffusers\pipelines\pipeline_utils.py:2294: FutureWarning: `enable_vae_tiling` is deprecated and will be removed in version 0.40.0. Calling `enable_vae_tiling()` on a `StableDiffusionPipeline` is deprecated and this method will be removed in a future version. Please use `pipe.vae.enable_tiling()`.
+  deprecate(
+  0%|          | 0/26 [00:00<?, ?it/s]  4%|\u258d         | 1/26 [00:01<00:32,  1.31s/it]  8%|\u258a         | 2/26 [00:01<00:18,  1.28it/s] 12%|\u2588\u258f        | 3/26 [00:02<00:14,  1.59it/s] 15%|\u2588\u258c        | 4/26 [00:02<00:12,  1.82it/s] 19%|\u2588\u2589        | 5/26 [00:03<00:10,  1.99it/s] 23%|\u2588\u2588\u258e       | 6/26 [00:03<00:09,  2.10it/s] 27%|\u2588\u2588\u258b       | 7/26 [00:03<00:08,  2.17it/s] 31%|\u2588\u2588\u2588       | 8/26 [00:04<00:08,  2.23it/s] 35%|\u2588\u2588\u2588\u258d      | 9/26 [00:04<00:07,  2.28it/s] 38%|\u2588\u2588\u2588\u258a      | 10/26 [00:05<00:07,  2.28it/s] 42%|\u2588\u2588\u2588\u2588\u258f     | 11/26 [00:05<00:06,  2.29it/s] 46%|\u2588\u2588\u2588\u2588\u258c     | 12/26 [00:05<00:06,  2.32it/s] 50%|\u2588\u2588\u2588\u2588\u2588     | 13/26 [00:06<00:05,  2.33it/s] 54%|\u2588\u2588\u2588\u2588\u2588\u258d    | 14/26 [00:06<00:05,  2.33it/s] 58%|\u2588\u2588\u2588\u2588\u2588\u258a    | 15/26 [00:07<00:04,  2.31it/s] 62%|\u2588\u2588\u2588\u2588\u2588\u2588\u258f   | 16/26 [00:07<00:04,  2.32it/s] 65%|\u2588\u2588\u2588\u2588\u2588\u2588\u258c   | 17/26 [00:08<00:03,  2.35it/s] 69%|\u2588\u2588\u2588\u2588\u2588\u2588\u2589   | 18/26 [00:08<00:03,  2.34it/s] 73%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258e  | 19/26 [00:08<00:02,  2.36it/s] 77%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258b  | 20/26 [00:09<00:02,  2.35it/s] 81%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  | 21/26 [00:09<00:02,  2.35it/s] 85%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258d | 22/26 [00:10<00:01,  2.36it/s] 88%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258a | 23/26 [00:10<00:01,  2.35it/s] 92%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258f| 24/26 [00:11<00:00,  2.36it/s] 96%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258c| 25/26 [00:11<00:00,  2.36it/s]100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 26/26 [00:11<00:00,  2.35it/s]100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 26/26 [00:11<00:00,  2.17it/s]
