@@ -5,6 +5,13 @@ short videos — all on your own PC. No cloud APIs, no accounts, no data leaving
 
 > Built by **[Sacheendra Lazar Paul](https://github.com/SacheendraLazarPaul)** — full-stack + AI developer.
 
+### Example output
+Text-to-image generated **locally** on a 6 GB GPU (SD 1.5, native resolution):
+
+<img src="docs/example-mountain-lake.png" width="320" alt="Example: calm mountain lake at sunset"/>
+
+> *Tip: add a screenshot of the chat/Generate UI here too — drop a PNG in `docs/` and reference it.*
+
 ---
 
 ## Features
