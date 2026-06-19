@@ -73,3 +73,8 @@ desktop.ini
 
 # === Claude Code internal ===
 .claude/
+
+# Runtime logs
+run_err.txt
+run_out.txt
+*.log
